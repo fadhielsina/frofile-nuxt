@@ -28,7 +28,7 @@ withDefaults(
   <motion.div
     :initial="{ opacity: 0, y }"
     :while-in-view="{ opacity: 1, y: 0 }"
-    :viewport="{ once: true, margin: '-80px' }"
+    :viewport="{ once: true, amount: 0 }"
     :transition="{ duration, delay, ease: 'easeOut' }"
   >
     <slot />

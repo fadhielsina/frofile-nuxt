@@ -38,27 +38,34 @@ function normalizeProvider(raw: string): Provider {
   )
 }
 
+// Kept small on purpose: on serverless (Vercel) every cold start spins up its
+// own pool, so a high per-instance limit can exhaust the database's total
+// connection budget under concurrent traffic.
+const SERVERLESS_POOL_SIZE = 3
+
 function buildPgConfig(cfg: ReturnType<typeof useRuntimeConfig>) {
-  if (cfg.dbUrl) return { connectionString: cfg.dbUrl }
+  if (cfg.dbUrl) return { connectionString: cfg.dbUrl, max: SERVERLESS_POOL_SIZE }
   return {
     host: cfg.dbHost,
     port: cfg.dbPort ? Number(cfg.dbPort) : 5432,
     user: cfg.dbUser,
     password: cfg.dbPassword,
     database: cfg.dbName,
-    ssl: cfg.dbSsl === 'true' ? { rejectUnauthorized: false } : undefined
+    ssl: cfg.dbSsl === 'true' ? { rejectUnauthorized: false } : undefined,
+    max: SERVERLESS_POOL_SIZE
   }
 }
 
 function buildMysqlConfig(cfg: ReturnType<typeof useRuntimeConfig>) {
-  if (cfg.dbUrl) return cfg.dbUrl
+  if (cfg.dbUrl) return { uri: cfg.dbUrl, connectionLimit: SERVERLESS_POOL_SIZE }
   return {
     host: cfg.dbHost,
     port: cfg.dbPort ? Number(cfg.dbPort) : 3306,
     user: cfg.dbUser,
     password: cfg.dbPassword,
     database: cfg.dbName,
-    ssl: cfg.dbSsl === 'true' ? {} : undefined
+    ssl: cfg.dbSsl === 'true' ? {} : undefined,
+    connectionLimit: SERVERLESS_POOL_SIZE
   }
 }
 

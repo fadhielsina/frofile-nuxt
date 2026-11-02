@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { toast } from 'vue-sonner'
 
 definePageMeta({ layout: 'default' })
+useSeoMeta({ title: 'Admin sign in', robots: 'noindex, nofollow' })
 
 const { fetch: refreshSession, loggedIn } = useUserSession()
 

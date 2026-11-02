@@ -26,7 +26,9 @@ interface DbHandle {
   provider: Provider
 }
 
-let handlePromise: Promise<DbHandle> | null = null
+// Cached on globalThis so dev-server HMR reloads reuse the same pool instead of
+// leaking a new one each time (hosted MySQL plans cap max_user_connections).
+const g = globalThis as unknown as { __frofileDb?: Promise<DbHandle> | null }
 
 function normalizeProvider(raw: string): Provider {
   const v = (raw || 'sqlite').toLowerCase().trim()
@@ -41,10 +43,10 @@ function normalizeProvider(raw: string): Provider {
 // Kept small on purpose: on serverless (Vercel) every cold start spins up its
 // own pool, so a high per-instance limit can exhaust the database's total
 // connection budget under concurrent traffic.
-const SERVERLESS_POOL_SIZE = 3
+const SERVERLESS_POOL_SIZE = 2
 
 function buildPgConfig(cfg: ReturnType<typeof useRuntimeConfig>) {
-  if (cfg.dbUrl) return { connectionString: cfg.dbUrl, max: SERVERLESS_POOL_SIZE }
+  if (cfg.dbUrl) return { connectionString: cfg.dbUrl, max: SERVERLESS_POOL_SIZE, connectionTimeoutMillis: 5000 }
   return {
     host: cfg.dbHost,
     port: cfg.dbPort ? Number(cfg.dbPort) : 5432,
@@ -52,12 +54,16 @@ function buildPgConfig(cfg: ReturnType<typeof useRuntimeConfig>) {
     password: cfg.dbPassword,
     database: cfg.dbName,
     ssl: cfg.dbSsl === 'true' ? { rejectUnauthorized: false } : undefined,
-    max: SERVERLESS_POOL_SIZE
+    max: SERVERLESS_POOL_SIZE,
+    connectionTimeoutMillis: 5000
   }
 }
 
 function buildMysqlConfig(cfg: ReturnType<typeof useRuntimeConfig>) {
-  if (cfg.dbUrl) return { uri: cfg.dbUrl, connectionLimit: SERVERLESS_POOL_SIZE }
+  if (cfg.dbUrl) return { uri: cfg.dbUrl, connectionLimit: SERVERLESS_POOL_SIZE,
+    maxIdle: 1,
+    idleTimeout: 10000,
+    connectTimeout: 5000 }
   return {
     host: cfg.dbHost,
     port: cfg.dbPort ? Number(cfg.dbPort) : 3306,
@@ -65,7 +71,10 @@ function buildMysqlConfig(cfg: ReturnType<typeof useRuntimeConfig>) {
     password: cfg.dbPassword,
     database: cfg.dbName,
     ssl: cfg.dbSsl === 'true' ? {} : undefined,
-    connectionLimit: SERVERLESS_POOL_SIZE
+    connectionLimit: SERVERLESS_POOL_SIZE,
+    maxIdle: 1,
+    idleTimeout: 10000,
+    connectTimeout: 5000
   }
 }
 
@@ -107,13 +116,13 @@ async function createHandle(): Promise<DbHandle> {
  * Call this from any server route/util instead of importing a driver directly.
  */
 export function useDb(): Promise<DbHandle> {
-  if (!handlePromise) {
-    handlePromise = createHandle().catch((err) => {
-      handlePromise = null // allow retrying on the next request instead of caching a broken connection
+  if (!g.__frofileDb) {
+    g.__frofileDb = createHandle().catch((err) => {
+      g.__frofileDb = null // allow retrying on the next request instead of caching a broken connection
       throw err
     })
   }
-  return handlePromise
+  return g.__frofileDb
 }
 
 /**

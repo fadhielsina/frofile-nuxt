@@ -1,3 +1,7 @@
+<script setup lang="ts">
+useSeoMeta({ title: 'Admin', robots: 'noindex, nofollow' })
+</script>
+
 <template>
   <div class="flex min-h-screen">
     <AdminSidebar />

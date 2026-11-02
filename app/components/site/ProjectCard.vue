@@ -8,7 +8,7 @@ defineProps<{ project: Project }>()
 </script>
 
 <template>
-  <Card class="flex h-full flex-col overflow-hidden transition-shadow hover:shadow-md">
+  <Card class="glass glass-hover flex h-full flex-col overflow-hidden rounded-2xl">
     <div v-if="project.coverImageUrl" class="aspect-video w-full overflow-hidden bg-muted">
       <img :src="project.coverImageUrl" :alt="project.title" class="h-full w-full object-cover" />
     </div>

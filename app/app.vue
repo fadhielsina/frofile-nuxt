@@ -1,8 +1,12 @@
 <script setup lang="ts">
-const { public: { siteName } } = useRuntimeConfig()
-
 useHead({
-  titleTemplate: (title) => (title ? `${title} · ${siteName}` : siteName)
+  htmlAttrs: { lang: 'en', class: 'dark' },
+  titleTemplate: (title) => title || 'Portfolio',
+  meta: [
+    { name: 'theme-color', content: '#030712' },
+    { name: 'color-scheme', content: 'dark' }
+  ],
+  link: [{ rel: 'icon', href: '/favicon.ico' }]
 })
 </script>
 
@@ -12,6 +16,6 @@ useHead({
     <NuxtLayout>
       <NuxtPage />
     </NuxtLayout>
-    <Sonner />
+    <Toaster />
   </div>
 </template>

@@ -18,6 +18,11 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     // server-only (never exposed to the client)
+    // 'static' (default) = public pages use hardcoded data from shared/data/fallback.ts
+    // and never touch the database. Set DATA_SOURCE=database to read from the DB
+    // (hardcoded data is then only a backup if the DB errors).
+    dataSource: process.env.DATA_SOURCE || 'static',
+
     dbProvider: process.env.DB_PROVIDER || 'sqlite',
     dbHost: process.env.DB_HOST || 'localhost',
     dbPort: process.env.DB_PORT || '',
@@ -34,6 +39,8 @@ export default defineNuxtConfig({
     },
 
     public: {
+      // contact form needs the DB; otherwise direct links are shown
+      contactForm: process.env.DATA_SOURCE === 'database',
       siteName: process.env.NUXT_PUBLIC_SITE_NAME || 'My Profile'
     }
   },

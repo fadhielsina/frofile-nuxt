@@ -20,8 +20,16 @@ const open = ref(false)
   <header class="sticky top-0 z-40 border-b border-white/5 bg-background/70 backdrop-blur-xl">
     <Container class="flex h-16 items-center justify-between">
       <NuxtLink to="/" class="flex items-center gap-2 font-semibold tracking-tight" aria-label="Home">
-        <span class="grid h-8 w-8 place-items-center rounded-lg bg-gradient-to-br from-blue-400 to-blue-700 text-sm font-bold text-white shadow-lg shadow-blue-600/30">
-          {{ (name || 'F').charAt(0) }}
+        <!-- logo: the source PNG has wide transparent margins, so it is scaled/offset to fill the box -->
+        <span class="relative block h-9 w-9 shrink-0 overflow-hidden">
+          <img
+            src="/logo.png"
+            alt=""
+            width="1052"
+            height="882"
+            class="absolute max-w-none"
+            style="width: 123.5%; left: -10%; top: -12%"
+          />
         </span>
         <span class="hidden sm:inline">{{ name || 'Portfolio' }}</span>
       </NuxtLink>
